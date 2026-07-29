@@ -156,7 +156,7 @@ fun SettingsScreen() {
             sub = if (serviceOn) {
                 "Watching for key presses"
             } else {
-                "Tap to open the system list and enable Assistant"
+                "Tap to open the system list and enable June"
             },
         ) { Grants.openAccessibilitySettings(context) }
         Hint(

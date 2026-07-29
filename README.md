@@ -1,11 +1,11 @@
 # LightVoice
 
-A voice assistant for the Light Phone III. Hold a key, say what you want, and it
-happens — alarms, timers, reminders, calls, iMessages, notes, and plain questions.
+**June** — a voice assistant for the Light Phone III. Hold a key, say what you want,
+and it happens — alarms, timers, reminders, calls, iMessages, notes, and plain questions.
 Siri's job description before Siri became a chatbot.
 
 <p align="center">
-  <em>Assistant · com.gios.lightvoice · arm64 · minSdk 29</em>
+  <em>June · com.gios.lightvoice · arm64 · minSdk 29</em>
 </p>
 
 ## What it does
@@ -53,7 +53,7 @@ like any other message.
 ## Setup
 
 1. Install the APK from [Releases](../../releases), or track the repo in Obtainium.
-2. Open **Assistant → SETUP** and add a Groq key and an Anthropic key. Typing those
+2. Open **June → SETUP** and add a Groq key and an Anthropic key. Typing those
    on a 3.9-inch keyboard is miserable, so open
    [the setup page](https://gi-os.github.io/LightVoice/) on a computer, fill it in,
    and scan the QR instead.

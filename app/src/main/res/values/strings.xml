@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Assistant</string>
-    <string name="ptt_service_label">Assistant push-to-talk</string>
-    <string name="ptt_service_description">Watches for a long-press of your chosen hardware key so you can talk to the assistant from anywhere in the phone. It reads no screen content.</string>
+    <string name="app_name">June</string>
+    <string name="ptt_service_label">June push-to-talk</string>
+    <string name="ptt_service_description">Watches for a long-press of your chosen hardware key so you can talk to June from anywhere in the phone. It reads no screen content.</string>
 </resources>
