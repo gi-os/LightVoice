@@ -4,6 +4,7 @@ import android.app.AlarmManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.provider.Settings
 import android.speech.tts.TextToSpeech
 import android.view.KeyEvent
@@ -26,7 +27,11 @@ object Grants {
     }
 
     fun exactAlarmsAllowed(c: Context): Boolean =
-        c.getSystemService(AlarmManager::class.java)?.canScheduleExactAlarms() ?: false
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            true // no such restriction existed before Android 12
+        } else {
+            c.getSystemService(AlarmManager::class.java)?.canScheduleExactAlarms() ?: false
+        }
 
     /** True if anything on the phone can speak, i.e. whether the cloud voice is
      *  merely preferred or strictly required. */

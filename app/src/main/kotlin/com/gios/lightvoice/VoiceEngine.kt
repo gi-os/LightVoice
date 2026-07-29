@@ -11,6 +11,7 @@ import com.gios.lightvoice.net.Tts
 import com.gios.lightvoice.net.VoiceError
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -39,6 +40,7 @@ object VoiceEngine {
     val state: StateFlow<State> = _state
 
     private var recorder: Recorder? = null
+    private var levelMirror: Job? = null
     private val _level = MutableStateFlow(0f)
     val level: StateFlow<Float> = _level
 
@@ -64,16 +66,22 @@ object VoiceEngine {
         if (!rec.hasPermission()) return false
         _state.value = State(phase = Phase.Listening)
 
-        // Mirror the recorder's meter; collection ends when the flow's owner is dropped.
-        scope.launch { rec.level.collect { _level.value = it } }
+        // The recorder's meter is a StateFlow, so collecting it never completes on its
+        // own — hold the job and cancel it, or every utterance leaves one behind.
+        levelMirror?.cancel()
+        levelMirror = scope.launch { rec.level.collect { _level.value = it } }
+
+        // Published before start(), because the recorder's own end-of-speech callback
+        // can fire from its thread and calls back into finish().
+        recorder = rec
 
         // Fires when you stop talking, so releasing the key is optional.
-        val started = rec.start { finish(app) }
-        if (!started) {
+        if (!rec.start { finish(app) }) {
+            recorder = null
+            levelMirror?.cancel()
             _state.value = State(phase = Phase.Failed, error = "The microphone is unavailable.")
             return false
         }
-        recorder = rec
         return true
     }
 
@@ -110,6 +118,8 @@ object VoiceEngine {
                 )
             } finally {
                 processing = false
+                levelMirror?.cancel()
+                levelMirror = null
                 _level.value = 0f
             }
         }
@@ -118,6 +128,8 @@ object VoiceEngine {
     fun abandon() {
         recorder?.cancel()
         recorder = null
+        levelMirror?.cancel()
+        levelMirror = null
         Player.stop()
         _level.value = 0f
         if (!processing) reset()

@@ -36,7 +36,7 @@ class RingActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val id = intent.getIntExtra(Alarms.EXTRA_ID, -1)
-        val alarm = Store.alarm(this, id) ?: RingService.snapshot
+        val alarm = RingService.snapshot ?: Store.alarm(this, id)
         setContent {
             LightVoiceTheme {
                 RingScreen(

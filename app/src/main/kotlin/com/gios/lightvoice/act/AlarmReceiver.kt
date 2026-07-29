@@ -12,10 +12,14 @@ class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val id = intent.getIntExtra(Alarms.EXTRA_ID, -1)
         val alarm = Store.alarm(context, id) ?: return
+        // The whole alarm travels in the intent, not just its id: consume() below
+        // deletes a one-shot from the store immediately, and the service reads its
+        // extras later, so an id alone would resolve to nothing and never ring.
         context.startForegroundService(
             Intent(context, RingService::class.java)
                 .setAction(RingService.ACTION_RING)
-                .putExtra(Alarms.EXTRA_ID, id),
+                .putExtra(Alarms.EXTRA_ID, id)
+                .putExtra(RingService.EXTRA_ALARM, alarm.toJson().toString()),
         )
         // Roll a repeating alarm forward now, so the next one is armed even if the
         // user never touches the ring screen.

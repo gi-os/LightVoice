@@ -20,6 +20,7 @@ import androidx.core.app.NotificationCompat
 import com.gios.lightvoice.R
 import com.gios.lightvoice.data.Alarm
 import com.gios.lightvoice.data.Store
+import org.json.JSONObject
 
 /**
  * Everything that happens when an alarm goes off: the sound, the vibration, the
@@ -51,9 +52,15 @@ class RingService : Service() {
         }
 
         val id = intent?.getIntExtra(Alarms.EXTRA_ID, -1) ?: -1
-        val alarm = Store.alarm(this, id) ?: snapshot ?: run { stopSelf(); return START_NOT_STICKY }
-        // The stored alarm may already have been rolled forward or deleted by
-        // AlarmReceiver, so keep our own copy of what is ringing.
+        val carried = intent?.getStringExtra(EXTRA_ALARM)?.let { json ->
+            runCatching { Alarm.fromJson(JSONObject(json)) }.getOrNull()
+        }
+        val alarm = carried
+            ?: Store.alarm(this, id)
+            ?: snapshot
+            ?: run { stopSelf(); return START_NOT_STICKY }
+        // The stored alarm has usually been rolled forward or deleted by the receiver
+        // already, so keep our own copy of what is ringing for the ring screen to read.
         snapshot = alarm
         ringingId = alarm.id
 
@@ -195,6 +202,7 @@ class RingService : Service() {
 
     companion object {
         const val ACTION_RING = "com.gios.lightvoice.RING"
+        const val EXTRA_ALARM = "alarm_json"
         const val ACTION_STOP = "com.gios.lightvoice.RING_STOP"
         const val ACTION_SNOOZE = "com.gios.lightvoice.RING_SNOOZE"
         private const val CHANNEL = "alarms"
