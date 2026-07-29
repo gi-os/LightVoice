@@ -35,18 +35,6 @@ object Prefs {
     private fun str(c: Context, k: String, d: String = "") = prefs(c).getString(k, d) ?: d
     private fun put(c: Context, k: String, v: String) = prefs(c).edit().putString(k, v.trim()).apply()
 
-    var Context.groqKey: String
-        get() = str(this, K_GROQ)
-        set(v) = put(this, K_GROQ, v)
-
-    var Context.anthropicKey: String
-        get() = str(this, K_ANTHROPIC)
-        set(v) = put(this, K_ANTHROPIC, v)
-
-    var Context.openAiKey: String
-        get() = str(this, K_OPENAI)
-        set(v) = put(this, K_OPENAI, v)
-
     fun groqKey(c: Context) = str(c, K_GROQ)
     fun setGroqKey(c: Context, v: String) = put(c, K_GROQ, v)
     fun anthropicKey(c: Context) = str(c, K_ANTHROPIC)
