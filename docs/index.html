@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LightVoice setup</title>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    margin: 0; padding: 32px 20px 64px; background: #000; color: #fff;
+    font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    max-width: 620px; margin-inline: auto;
+  }
+  h1 { font-size: 22px; font-weight: 500; letter-spacing: .02em; }
+  p { color: #9a9a9a; }
+  label { display: block; margin: 18px 0 6px; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; color: #9a9a9a; }
+  input {
+    width: 100%; box-sizing: border-box; padding: 12px 14px; background: #000;
+    border: 1px solid #5e5e5e; color: #fff; font-size: 15px; font-family: ui-monospace, monospace;
+  }
+  input:focus { outline: none; border-color: #fff; }
+  button {
+    margin-top: 24px; width: 100%; padding: 16px; background: #fff; color: #000;
+    border: 0; font-size: 14px; letter-spacing: .18em; text-transform: uppercase; cursor: pointer;
+  }
+  #qr { margin-top: 28px; display: grid; place-items: center; }
+  #qr canvas, #qr img { background: #fff; padding: 16px; }
+  .note { font-size: 13px; color: #5e5e5e; margin-top: 28px; }
+</style>
+</head>
+<body>
+  <h1>LightVoice setup</h1>
+  <p>
+    Fill in whatever you have, generate the code, then scan it from Settings on the
+    phone. Nothing is sent anywhere — the QR is drawn in this page, and the values
+    only ever exist in this tab and on your phone.
+  </p>
+
+  <label for="groq">Groq key — speech in and voice out</label>
+  <input id="groq" placeholder="gsk_…" autocomplete="off" spellcheck="false">
+
+  <label for="anthropic">Anthropic key — understanding</label>
+  <input id="anthropic" placeholder="sk-ant-…" autocomplete="off" spellcheck="false">
+
+  <label for="openai">OpenAI key — optional, alternative voice</label>
+  <input id="openai" placeholder="sk-…" autocomplete="off" spellcheck="false">
+
+  <label for="bb_url">BlueBubbles server — optional, for texting</label>
+  <input id="bb_url" placeholder="https://mac.your-tailnet.ts.net" autocomplete="off" spellcheck="false">
+
+  <label for="bb_password">BlueBubbles password</label>
+  <input id="bb_password" placeholder="password" autocomplete="off" spellcheck="false">
+
+  <button id="make">Generate QR</button>
+  <div id="qr"></div>
+  <p class="note">
+    A single key pasted on its own also scans fine — the app recognises it by its
+    prefix. Close this tab when you're done.
+  </p>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+  <script>
+    const fields = ["groq", "anthropic", "openai", "bb_url", "bb_password"];
+    document.getElementById("make").addEventListener("click", () => {
+      const payload = {};
+      for (const id of fields) {
+        const value = document.getElementById(id).value.trim();
+        if (value) payload[id] = value;
+      }
+      const target = document.getElementById("qr");
+      target.replaceChildren();
+      if (!Object.keys(payload).length) {
+        target.textContent = "Nothing to encode yet.";
+        return;
+      }
+      const canvas = document.createElement("canvas");
+      target.append(canvas);
+      QRCode.toCanvas(canvas, JSON.stringify(payload), { width: 280, margin: 1 }, (err) => {
+        if (err) target.textContent = "Couldn't draw that: " + err.message;
+      });
+    });
+  </script>
+</body>
+</html>
