@@ -94,13 +94,17 @@ To undo it:
 adb shell settings put secure enabled_accessibility_services ""
 ```
 
+That empties the same list LightControl's setup writes to, so if both are installed, put the
+other component back afterwards — see [The wheel](#the-wheel).
+
 ### The wheel
 
 Turning the wheel scrolls the list you are looking at — ALARMS, NOTES, or the SETUP page.
-Light relabelled the wheel sensor's two scancodes in `/system/usr/keylayout/Generic.kl` and
-nothing in the system intercepts them, so they reach the focused window as ordinary key
-events and `MainActivity` reads them in `dispatchKeyEvent`, early enough to beat the key
-fields in SETUP, which would otherwise take a turn as a letter.
+That works with nothing installed but June. Light relabelled the wheel sensor's two scancodes
+in `/system/usr/keylayout/Generic.kl` and nothing in the system intercepts them, so they reach
+the focused window as ordinary key events and `MainActivity` reads them in `dispatchKeyEvent`,
+early enough to beat the key fields in SETUP, which would otherwise take a turn as a letter.
+No service, no permission, no root: the app does its own scrolling.
 
 Notches are paid off a fraction per frame rather than applied as they arrive, because the
 sensor fires faster than the screen refreshes and a spin applied notch-by-notch is a stack of
@@ -109,10 +113,46 @@ sits under a thumb. The long version is in
 [LightNews](https://github.com/gi-os/LightNews#the-wheel-and-the-camera-button).
 
 The wheel is *not* available as a push-to-talk key, and the service refuses it even if an
-older binding names one: a turn is a scroll everywhere on this phone, so binding it here
-would open the mic every time you read a list. Only the turns are handled at all — the wheel
-click and the camera button belong to
-[LightControl](https://github.com/gi-os/LightControl), which owns them phone-wide.
+older binding names one: a turn is a scroll everywhere on this phone, so binding it here would
+open the mic every time you read a list.
+
+Only the turns are handled at all. Holding the wheel in, clicking it and the camera button do
+nothing in June, and if you want them to do something,
+[LightControl](https://github.com/gi-os/LightControl) is the optional app that gives them a
+job — hold the wheel in and turn for brightness, tap it for the flashlight, the camera button
+opens the camera, each rebindable to any installed app with tap and hold bound separately. It
+also hands brightness, or a synthetic-swipe scroll, to apps that don't read the wheel
+themselves. Installing it does not take this app's scrolling away: it passes bare turns
+straight through to `com.gios.*` on purpose, because scrolling a notch at a time inside an app
+beats anything reachable from outside it.
+
+> **Read this before you install LightControl, if you use push-to-talk.**
+> `enabled_accessibility_services` is one list shared by every accessibility service on the
+> phone, and the command below *replaces* it rather than adding to it. Run it as written and
+> June's PTT service is quietly unbound — the mic key simply stops opening the mic, with
+> nothing on screen to explain it. Name both components, colon-joined, instead:
+>
+> ```bash
+> adb shell settings put secure enabled_accessibility_services \
+>   com.gios.lightvoice/com.gios.lightvoice.ptt.PttService:com.gios.lightcontrol/com.gios.lightcontrol.keys.ControlService
+> ```
+
+```bash
+# Optional: LightControl, for brightness, the flashlight and the camera button
+adb install -r LightControl-v1.0.x.apk
+
+# The key service. NOTE: this setting is a list, and this command REPLACES it —
+# if you also run LightVoice's push-to-talk, colon-join both components instead.
+adb shell settings put secure enabled_accessibility_services \
+  com.gios.lightcontrol/com.gios.lightcontrol.keys.ControlService
+adb shell settings put secure accessibility_enabled 1
+
+# Brightness, and the level readout + opening apps from the service
+adb shell appops set com.gios.lightcontrol WRITE_SETTINGS allow
+adb shell appops set com.gios.lightcontrol SYSTEM_ALERT_WINDOW allow
+```
+
+Latest APK: <https://github.com/gi-os/LightControl/releases/latest>
 
 ## Cost
 
