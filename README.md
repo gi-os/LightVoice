@@ -1,14 +1,47 @@
 # LightVoice
 
-**June** — a voice assistant for the Light Phone III. Hold a key, say what you want,
-and it happens — alarms, timers, reminders, calls, iMessages, notes, and plain questions.
-Siri's job description before Siri became a chatbot.
+**June** — a voice assistant for the **Light Phone III**. Hold a key, say what you want,
+and it happens: alarms, timers, reminders, calls, iMessages, notes, plain questions.
+Package `com.gios.lightvoice`, arm64, minSdk 29. Current released version: **v1.0.7**.
 
-<p align="center">
-  <em>June · com.gios.lightvoice · arm64 · minSdk 29</em>
-</p>
+The assistant is named June (renamed from "Assistant" in v1.0.5); the repo and package
+keep the LightVoice name on purpose, since changing the package would make Android treat
+it as a different app and break Obtainium updates.
 
-## What it does
+## Why this exists
+
+LightOS has no Google Play Services, so the two platform building blocks a voice assistant
+would normally reach for don't exist: `android.speech.SpeechRecognizer` has no provider to
+bind to, and `android.speech.tts` has no engine installed. **Both ends of the loop —
+speech in and the spoken response out — have to be cloud services**, for that reason:
+
+1. **Capture** — `AudioRecord` straight to 16 kHz mono WAV, with a level meter and
+   end-of-speech detection, so releasing the key early still works.
+2. **Transcribe** — Groq `whisper-large-v3-turbo`
+   (`/openai/v1/audio/transcriptions`). Contact names are passed as the decoder's
+   `prompt`, which is what turns "text Alec" into the right person.
+3. **Decide** — Claude Haiku, using tool use rather than regex, one round trip.
+4. **Do** — the app performs the action itself and composes the confirmation from what
+   actually happened, so it can never claim an alarm is set when it isn't.
+5. **Speak** — Groq `playai-tts` by default (one key covers both directions, though its
+   terms need accepting once in the Groq console), or OpenAI `gpt-4o-mini-tts`. Turn
+   speech off and replies stay text-only.
+
+Roughly, per request: a fifth of a cent to transcribe, a fifth to decide, a similar amount
+again to speak — under half a cent a question with speech off.
+
+## Quick start
+
+1. Install the APK from [Releases](../../releases) or track the repo in Obtainium — CI
+   releases only on pushes to `main` (see [Building](#building)).
+2. Open **June → SETUP** and add a Groq key and an Anthropic key. Typing those on a
+   3.9-inch keyboard is miserable, so open
+   [gi-os.github.io/LightVoice](https://gi-os.github.io/LightVoice/) on a computer, fill
+   the form in, and scan the QR on the phone instead.
+3. Optional: add a [BlueBubbles](https://bluebubbles.app) URL and password, then **SYNC
+   CONTACTS** to pull the Mac's address book.
+4. Grant the permissions on first launch: microphone, contacts, phone, notifications.
+5. Say something — hold the on-screen circle or, once wired up (below), a hardware key.
 
 | Say | What happens |
 | --- | --- |
@@ -22,54 +55,16 @@ Siri's job description before Siri became a chatbot.
 | "Note that the rent is due Friday" | Saved to Notes |
 | "How long does a hard-boiled egg take?" | Answered in a sentence, spoken aloud |
 
-## How it works
-
-Nothing on a Light Phone III can do the first or the last step of this, so both are
-borrowed from elsewhere:
-
-1. **Capture** — `AudioRecord` straight to 16 kHz mono WAV, with a level meter and
-   end-of-speech detection, so you can let go of the key early and it still works.
-2. **Transcribe** — Groq `whisper-large-v3-turbo`. There is no Play Services on
-   LightOS, so `android.speech.SpeechRecognizer` has no provider to bind to; the
-   platform path simply doesn't exist. Your contact names are passed as a decoder
-   prompt, which is what turns "text Alec" into the right person.
-3. **Decide** — Claude Haiku, using tool use rather than regex. One round trip.
-4. **Do** — the app performs the action itself and composes the confirmation from
-   what actually happened, so it can never tell you an alarm is set when it isn't.
-5. **Speak** — PlayAI Dialog on Groq (one key for both directions), or OpenAI TTS.
-   LightOS ships no TTS engine either. Turn speech off and replies are text only.
-
-Alarms are the app's own: `AlarmManager.setAlarmClock`, a foreground service for the
-sound, and a full-screen activity with `showWhenLocked` + `turnScreenOn`. Handing the
-request to a clock app via `AlarmClock.ACTION_SET_ALARM` isn't an option, because
-LightOS isn't guaranteed to have anything that answers it — the Settings tab reports
-whether yours does.
-
-Texting goes through your own [BlueBubbles](https://bluebubbles.app) server over
-`POST /api/v1/chat/new`, which lands in the existing thread for a known address and
-starts one otherwise. It shows up in [LightChat](https://github.com/gi-os/LightChat)
-like any other message.
-
-## Setup
-
-1. Install the APK from [Releases](../../releases), or track the repo in Obtainium.
-2. Open **June → SETUP** and add a Groq key and an Anthropic key. Typing those
-   on a 3.9-inch keyboard is miserable, so open
-   [the setup page](https://gi-os.github.io/LightVoice/) on a computer, fill it in,
-   and scan the QR instead.
-3. Optional: add your BlueBubbles URL and password, then **SYNC CONTACTS** to pull
-   the Mac's address book.
-4. Grant the permissions it asks for on first launch: microphone, contacts, phone,
-   notifications.
+## Configuration and usage
 
 ### Push-to-talk from anywhere
 
-The in-app circle works with no further setup. To open the mic from anywhere in the
-phone, including a locked screen:
+The in-app circle needs no setup. To open the mic from anywhere on the phone, including a
+locked screen:
 
 ```bash
 # 1. Turn the accessibility service on. LightOS has no Settings UI for this list,
-#    so set it directly.
+#    so it's set directly.
 adb shell settings put secure enabled_accessibility_services \
   com.gios.lightvoice/com.gios.lightvoice.ptt.PttService
 adb shell settings put secure accessibility_enabled 1
@@ -79,96 +74,117 @@ adb shell settings put secure accessibility_enabled 1
 adb shell appops set com.gios.lightvoice SYSTEM_ALERT_WINDOW allow
 ```
 
-Then enable **Hardware key** in SETUP. It binds to volume-up by default; **Learn a
-key** captures any other, including the LPIII's custom button, which reports a code
-of its own.
+Then enable **Hardware key** in SETUP. It binds to volume-up by default; **Learn a key**
+captures any other, including the LPIII's custom button, which reports a code of its own.
 
-**The bound key keeps working.** A key-down is never swallowed, so a short press
-still changes the volume exactly as before; only a deliberate half-second hold opens
-the mic, and only the release of that hold is consumed. Worst case, if anything about
-this misbehaves, you get one volume step you didn't ask for — it can't trap you.
+**The bound key keeps working.** A key-down is never swallowed — only a deliberate
+half-second hold opens the mic, and only the release of that hold is consumed — so a
+short press still changes the volume exactly as before. Worst case if anything misbehaves
+is one unwanted volume step; the service can't trap the user.
 
-To undo it:
+To undo it: `adb shell settings put secure enabled_accessibility_services ""`. That empties
+the same list [LightControl](https://github.com/gi-os/LightControl)'s setup writes to, so
+if both are installed, colon-join both components instead of running either setup command
+alone:
 
 ```bash
-adb shell settings put secure enabled_accessibility_services ""
+adb shell settings put secure enabled_accessibility_services \
+  com.gios.lightvoice/com.gios.lightvoice.ptt.PttService:com.gios.lightcontrol/com.gios.lightcontrol.keys.ControlService
 ```
-
-That empties the same list LightControl's setup writes to, so if both are installed, put the
-other component back afterwards — see [The wheel](#the-wheel).
 
 ### The wheel
 
-Turning the wheel scrolls the list you are looking at — ALARMS, NOTES, or the SETUP page.
-That works with nothing installed but June. Light relabelled the wheel sensor's two scancodes
-in `/system/usr/keylayout/Generic.kl` and nothing in the system intercepts them, so they reach
-the focused window as ordinary key events and `MainActivity` reads them in `dispatchKeyEvent`,
-early enough to beat the key fields in SETUP, which would otherwise take a turn as a letter.
-No service, no permission, no root: the app does its own scrolling.
+Turning the wheel scrolls whatever list is on screen — ALARMS, NOTES, or the SETUP page —
+with nothing installed but June. LightOS relabels the wheel sensor's two scancodes in
+`/system/usr/keylayout/Generic.kl`, and nothing intercepts them, so they reach the focused
+window as ordinary key events; `MainActivity` reads them in `dispatchKeyEvent`, early
+enough to beat the key-entry fields in SETUP (otherwise a turn there would type a letter).
+No service, no permission, no root. Notches are paid off a fraction per frame rather than
+applied as they arrive, since the sensor fires faster than the screen refreshes; the first
+notch after a pause waits for a second to confirm it, since the wheel sits under a thumb.
 
-Notches are paid off a fraction per frame rather than applied as they arrive, because the
-sensor fires faster than the screen refreshes and a spin applied notch-by-notch is a stack of
-jumps; the first notch after a pause also waits for a second to confirm it, because the wheel
-sits under a thumb. The long version is in
-[LightNews](https://github.com/gi-os/LightNews#the-wheel-and-the-camera-button).
-
-The wheel is *not* available as a push-to-talk key, and the service refuses it even if an
-older binding names one: a turn is a scroll everywhere on this phone, so binding it here would
-open the mic every time you read a list.
-
-Only the turns are handled at all. Holding the wheel in, clicking it and the camera button do
-nothing in June, and if you want them to do something,
-[LightControl](https://github.com/gi-os/LightControl) is the optional app that gives them a
-job — hold the wheel in and turn for brightness, tap it for the flashlight, the camera button
-opens the camera, each rebindable to any installed app with tap and hold bound separately. It
-also hands brightness, or a synthetic-swipe scroll, to apps that don't read the wheel
-themselves. Installing it does not take this app's scrolling away: it passes bare turns
-straight through to `com.gios.*` on purpose, because scrolling a notch at a time inside an app
-beats anything reachable from outside it.
-
-> **Read this before you install LightControl, if you use push-to-talk.**
-> `enabled_accessibility_services` is one list shared by every accessibility service on the
-> phone, and the command below *replaces* it rather than adding to it. Run it as written and
-> June's PTT service is quietly unbound — the mic key simply stops opening the mic, with
-> nothing on screen to explain it. Name both components, colon-joined, instead:
->
-> ```bash
-> adb shell settings put secure enabled_accessibility_services \
->   com.gios.lightvoice/com.gios.lightvoice.ptt.PttService:com.gios.lightcontrol/com.gios.lightcontrol.keys.ControlService
-> ```
+**The wheel is deliberately not available as a push-to-talk key** — the PTT service
+refuses it even if an older binding names one, because a turn is a scroll everywhere else
+on the phone, and binding it here would open the mic every time a list is read. Holding
+the wheel in, clicking it, and the camera button all do nothing in June; for those,
+[LightControl](https://github.com/gi-os/LightControl) is the optional separate install
+that gives the whole phone brightness, flashlight and camera-button actions, each
+rebindable. It passes bare turns straight through to `com.gios.*`, so installing it does
+not take June's own scrolling away.
 
 ```bash
-# Optional: LightControl, for brightness, the flashlight and the camera button
 adb install -r LightControl-v1.0.x.apk
 
-# The key service. NOTE: this setting is a list, and this command REPLACES it —
-# if you also run LightVoice's push-to-talk, colon-join both components instead.
 adb shell settings put secure enabled_accessibility_services \
   com.gios.lightcontrol/com.gios.lightcontrol.keys.ControlService
 adb shell settings put secure accessibility_enabled 1
 
-# Brightness, and the level readout + opening apps from the service
 adb shell appops set com.gios.lightcontrol WRITE_SETTINGS allow
 adb shell appops set com.gios.lightcontrol SYSTEM_ALERT_WINDOW allow
 ```
 
-Latest APK: <https://github.com/gi-os/LightControl/releases/latest>
+### Alarms
 
-## Cost
+Alarms are **this app's own**, not `AlarmClock.ACTION_SET_ALARM` — nothing on LightOS is
+guaranteed to answer that intent. The stack is `AlarmManager.setAlarmClock` +
+`USE_EXACT_ALARM` (install-granted; unlike `SCHEDULE_EXACT_ALARM` it needs no Settings
+screen) → `RingService` foreground service → `RingActivity` with `showWhenLocked` /
+`turnScreenOn`, reachable both by full-screen intent and by a direct start (the latter
+needs the same `SYSTEM_ALERT_WINDOW` appop as push-to-talk above). The alarm object
+travels inside the receiver's intent, not just its id — the receiver deletes a one-shot
+the instant it fires, so an id alone would resolve to nothing by the time the service
+reads its extras. The SETUP tab self-reports engine/recogniser/`SET_ALARM`-handler
+presence, since LightOS has no Settings screens to check any of that from outside the app.
 
-Per request, roughly: a fifth of a cent to transcribe, a fifth to decide, and a
-similar amount again to speak. Speech off, it's under half a cent a question.
+### Texting
 
-## Build
+Goes through your own BlueBubbles server, `POST /api/v1/chat/new` with a single address —
+AppleScript's send-to-buddy lands in the existing thread, so there's no chat guid to
+resolve and no Private API needed. Shows up in
+[LightChat](https://github.com/gi-os/LightChat) like any other message. Contacts merge
+`ContactsContract` with the Mac address book pulled from `GET /api/v1/contact`.
+
+## Building
 
 ```bash
 ./gradlew :app:assembleRelease
 ```
 
 CI builds every push and verifies the signing certificate against
-`signing-fingerprint.txt` and that the package declares a launcher icon; pushes to
-`main` also cut a GitHub Release. The keystore is committed on purpose — this is a
-sideloaded personal app, and a stable certificate is what lets Obtainium update it in
-place.
+`signing-fingerprint.txt` and that the package declares a launcher icon; **pushes to
+`main` also cut a GitHub Release** — every other branch builds and verifies and stops,
+which is the way to prove a change without cutting an Obtainium update. The keystore is
+committed on purpose (`keystore/lightvoice.jks`) — this is a sideloaded personal app, and
+a stable certificate is what lets Obtainium update it in place.
 
 Regenerate the launcher icon with `python3 scripts/generate_icon.py`.
+
+Setup QR page is GitHub Pages from `/docs` at
+<https://gi-os.github.io/LightVoice/>.
+
+## Contributing
+
+Issues and PRs welcome.
+
+- `enabled_accessibility_services` is a single shared list — any change to the PTT setup
+  flow needs to keep the colon-join behavior working for anyone who also runs
+  LightControl.
+- Keep the spoken confirmation composed from what the dispatcher actually did, not from
+  what the model claims — that's the guarantee the app makes and it should stay true for
+  new intents too.
+- CI publishes a release on every push to `main` — verify locally before pushing there.
+
+## Version history
+
+| Version | Change |
+| --- | --- |
+| v1.0.7 | Say what the wheel needs, and warn about the accessibility list (docs) |
+| v1.0.6 | Scroll the lists and the setup page with the hardware wheel |
+| v1.0.5 | Name the assistant June |
+| v1.0.4 | Fix the ring race, a leaked meter collector, and an API-31 call on minSdk 29 |
+| — | Prefs: drop the unused Context extension properties |
+| — | LightVoice: a voice assistant for the Light Phone III (initial commit) |
+
+## Licence
+
+MIT.
