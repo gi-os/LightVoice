@@ -2,6 +2,7 @@ package com.gios.lightvoice
 
 import android.Manifest
 import android.os.Bundle
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -16,6 +18,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import com.gios.lightvoice.hw.LightKey
+import com.gios.lightvoice.hw.LightKeys
+import com.gios.lightvoice.hw.LocalWheelBus
+import com.gios.lightvoice.hw.WheelBus
 import com.gios.lightvoice.ui.AlarmsScreen
 import com.gios.lightvoice.ui.AskPanel
 import com.gios.lightvoice.ui.NotesScreen
@@ -24,6 +30,33 @@ import com.gios.lightvoice.ui.TabBar
 import com.gios.lightvoice.ui.theme.LightVoiceTheme
 
 class MainActivity : ComponentActivity() {
+
+    /** Wheel notches on their way to whichever tab is showing. */
+    private val wheel = WheelBus()
+
+    /**
+     * Every hardware key arrives here first — `DecorView` calls the window callback before
+     * it walks the view hierarchy — so a turn is read before the focused key field in
+     * Settings can take it as a letter. Both halves of a notch are consumed: one notch is a
+     * complete DOWN+UP pair, and the UP would otherwise land as a keypress.
+     *
+     * This is the app's own window only. Push-to-talk is a separate path entirely — an
+     * accessibility service, watching one key everywhere — and it lets the wheel through.
+     */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        when (LightKeys.of(event)) {
+            LightKey.WheelUp -> {
+                if (event.action == KeyEvent.ACTION_DOWN) wheel.send(1)
+                return true
+            }
+            LightKey.WheelDown -> {
+                if (event.action == KeyEvent.ACTION_DOWN) wheel.send(-1)
+                return true
+            }
+            else -> Unit
+        }
+        return super.dispatchKeyEvent(event)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +74,11 @@ class MainActivity : ComponentActivity() {
                 1,
             )
         }
-        setContent { LightVoiceTheme { Home() } }
+        setContent {
+            LightVoiceTheme {
+                CompositionLocalProvider(LocalWheelBus provides wheel) { Home() }
+            }
+        }
     }
 
     override fun onPause() {
@@ -56,6 +93,8 @@ private fun Home() {
     var tab by remember { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         Box(Modifier.weight(1f)) {
+            // One tab at a time, by construction: an unselected tab is not composed, so no
+            // off-screen list is left listening for wheel notches.
             when (tab) {
                 0 -> AskPanel()
                 1 -> AlarmsScreen()

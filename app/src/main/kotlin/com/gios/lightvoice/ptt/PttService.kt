@@ -8,6 +8,7 @@ import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.gios.lightvoice.ListenActivity
 import com.gios.lightvoice.Prefs
+import com.gios.lightvoice.hw.LightKeys
 
 /**
  * Global push-to-talk: a long-press of one hardware key opens the mic from anywhere
@@ -37,6 +38,12 @@ class PttService : AccessibilityService() {
     override fun onInterrupt() = Unit
 
     override fun onKeyEvent(event: KeyEvent): Boolean {
+        // The wheel is never push-to-talk. It belongs to whatever is on screen — this app
+        // scrolls with it, LightControl uses it phone-wide — so a turn bound here would open
+        // the mic every time anything scrolled. Refused before learning mode can offer it as
+        // a candidate, and before a binding made by an older build can act on it.
+        if (LightKeys.of(event) != null) return false
+
         // Learning mode: report whatever was pressed so Settings can bind it, and get
         // out of the way. Never consume here — the key being learned may be the only
         // way out of whatever is on screen.

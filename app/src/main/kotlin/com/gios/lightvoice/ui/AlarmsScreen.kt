@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.gios.lightvoice.act.Alarms
 import com.gios.lightvoice.data.Alarm
 import com.gios.lightvoice.data.Store
+import com.gios.lightvoice.hw.WheelScroll
 
 /** Everything scheduled, and a way to delete one without talking. */
 @Composable
@@ -28,6 +30,10 @@ fun AlarmsScreen() {
     val context = LocalContext.current
     var version by remember { mutableIntStateOf(0) }
     val alarms = remember(version) { Store.alarms(context).sortedBy { it.atMillis } }
+
+    // A week of repeating alarms outruns the panel, so the wheel scrolls the list.
+    val listState = rememberLazyListState()
+    WheelScroll(listState)
 
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         Text(
@@ -41,7 +47,7 @@ fun AlarmsScreen() {
             EmptyState("Nothing scheduled.\nSay “wake me at seven” to add one.")
             return@Column
         }
-        LazyColumn(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), state = listState) {
             items(alarms, key = { it.id }) { alarm ->
                 AlarmRow(alarm) {
                     Alarms.cancel(context, alarm.id)

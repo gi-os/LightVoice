@@ -94,6 +94,26 @@ To undo it:
 adb shell settings put secure enabled_accessibility_services ""
 ```
 
+### The wheel
+
+Turning the wheel scrolls the list you are looking at — ALARMS, NOTES, or the SETUP page.
+Light relabelled the wheel sensor's two scancodes in `/system/usr/keylayout/Generic.kl` and
+nothing in the system intercepts them, so they reach the focused window as ordinary key
+events and `MainActivity` reads them in `dispatchKeyEvent`, early enough to beat the key
+fields in SETUP, which would otherwise take a turn as a letter.
+
+Notches are paid off a fraction per frame rather than applied as they arrive, because the
+sensor fires faster than the screen refreshes and a spin applied notch-by-notch is a stack of
+jumps; the first notch after a pause also waits for a second to confirm it, because the wheel
+sits under a thumb. The long version is in
+[LightNews](https://github.com/gi-os/LightNews#the-wheel-and-the-camera-button).
+
+The wheel is *not* available as a push-to-talk key, and the service refuses it even if an
+older binding names one: a turn is a scroll everywhere on this phone, so binding it here
+would open the mic every time you read a list. Only the turns are handled at all — the wheel
+click and the camera button belong to
+[LightControl](https://github.com/gi-os/LightControl), which owns them phone-wide.
+
 ## Cost
 
 Per request, roughly: a fifth of a cent to transcribe, a fifth to decide, and a

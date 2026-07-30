@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gios.lightvoice.data.Note
 import com.gios.lightvoice.data.Store
+import com.gios.lightvoice.hw.WheelScroll
 import com.gios.lightvoice.ui.theme.Dim
 import java.time.Instant
 import java.time.ZoneId
@@ -30,6 +32,10 @@ fun NotesScreen() {
     val context = LocalContext.current
     var version by remember { mutableIntStateOf(0) }
     val notes = remember(version) { Store.notes(context).sortedByDescending { it.created } }
+
+    // Notes are dictated, so this list only grows; the wheel is the way through it.
+    val listState = rememberLazyListState()
+    WheelScroll(listState)
 
     Column(Modifier.fillMaxSize().background(Color.Black)) {
         Text(
@@ -43,7 +49,7 @@ fun NotesScreen() {
             EmptyState("No notes yet.\nSay “note that the rent is due Friday”.")
             return@Column
         }
-        LazyColumn(Modifier.fillMaxSize()) {
+        LazyColumn(Modifier.fillMaxSize(), state = listState) {
             items(notes, key = { it.id }) { note ->
                 NoteRow(note) {
                     Store.deleteNote(context, note.id)

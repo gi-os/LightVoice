@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.gios.lightvoice.Prefs
 import com.gios.lightvoice.act.Bb
 import com.gios.lightvoice.act.ContactBook
+import com.gios.lightvoice.hw.WheelScroll
 import com.gios.lightvoice.ptt.Grants
 import com.gios.lightvoice.ui.theme.Dim
 import com.gios.lightvoice.ui.theme.Faint
@@ -49,6 +50,11 @@ fun SettingsScreen() {
     var version by remember { mutableIntStateOf(0) }
     var note by remember { mutableStateOf("") }
 
+    // The longest page in the app by far, and the one you least want to swipe through with
+    // a key field under your thumb — so the wheel scrolls it.
+    val scroll = rememberScrollState()
+    WheelScroll(scroll)
+
     val scan = rememberLauncherForActivityResult(ScanContract()) { result ->
         val payload = result.contents
         if (payload.isNullOrBlank()) return@rememberLauncherForActivityResult
@@ -57,7 +63,7 @@ fun SettingsScreen() {
     }
 
     Column(
-        Modifier.fillMaxSize().background(Color.Black).verticalScroll(rememberScrollState()),
+        Modifier.fillMaxSize().background(Color.Black).verticalScroll(scroll),
     ) {
         Section("KEYS")
         KeyField("Groq (speech)", Prefs.groqKey(context), "gsk_…") {
