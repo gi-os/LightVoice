@@ -28,6 +28,8 @@ import com.gios.lightvoice.ui.NotesScreen
 import com.gios.lightvoice.ui.SettingsScreen
 import com.gios.lightvoice.ui.TabBar
 import com.gios.lightvoice.ui.theme.LightVoiceTheme
+import com.gios.lightvoice.report.CrashLog
+import com.gios.lightvoice.report.ReportOverlay
 
 class MainActivity : ComponentActivity() {
 
@@ -60,6 +62,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // First thing, before anything else can throw: the handler chains onto whatever is
+        // already installed and only writes a file, so it is safe this early.
+        CrashLog.install(this)
         WindowCompat.setDecorFitsSystemWindows(window, true)
         // Asked once on first open rather than at the moment of speaking: a permission
         // sheet appearing over the mic is the one thing that breaks the illusion.
@@ -77,6 +82,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             LightVoiceTheme {
                 CompositionLocalProvider(LocalWheelBus provides wheel) { Home() }
+                // Shake to report, the crash offer on next launch, and the app's own noticed
+                // failures. A sibling, not a wrapper — the sheet is its own window, so it covers
+                // the app whether or not it contains it.
+                ReportOverlay()
             }
         }
     }

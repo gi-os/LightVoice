@@ -2,6 +2,13 @@ name: Build & Release APK
 
 on:
   push:
+    # Was a bare `push:`, which released from every branch — so a feature branch or a
+    # check run published straight to the phone. Releases come from main only.
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - '.github/workflows/check.yml'
+      - 'signing-fingerprint.txt'
   workflow_dispatch:
 
 permissions:
@@ -34,6 +41,10 @@ jobs:
 
       - name: Build APKs
         run: ./gradlew :app:assembleDebug :app:assembleRelease --stacktrace
+        env:
+          # Shake-to-report posts issues with this. Absent, the build still works —
+          # reports queue on the phone until a build that has the key installs over it.
+          REPORT_TOKEN: ${{ secrets.REPORT_TOKEN }}
 
       - name: Collect APK
         run: |
