@@ -28,8 +28,8 @@ import com.gios.lightvoice.ui.NotesScreen
 import com.gios.lightvoice.ui.SettingsScreen
 import com.gios.lightvoice.ui.TabBar
 import com.gios.lightvoice.ui.theme.LightVoiceTheme
-import com.gios.lightvoice.report.CrashLog
-import com.gios.lightvoice.report.ReportOverlay
+import com.gios.light.common.report.LightReport
+import com.gios.light.common.report.ReportOverlay
 
 class MainActivity : ComponentActivity() {
 
@@ -64,7 +64,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // First thing, before anything else can throw: the handler chains onto whatever is
         // already installed and only writes a file, so it is safe this early.
-        CrashLog.install(this)
+        LightReport.install(
+            context = this,
+            appName = "LightVoice",
+            label = "voice",
+            token = BuildConfig.REPORT_TOKEN,
+        )
         WindowCompat.setDecorFitsSystemWindows(window, true)
         // Asked once on first open rather than at the moment of speaking: a permission
         // sheet appearing over the mic is the one thing that breaks the illusion.
