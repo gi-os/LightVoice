@@ -18,10 +18,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
-import com.gios.lightvoice.hw.LightKey
-import com.gios.lightvoice.hw.LightKeys
-import com.gios.lightvoice.hw.LocalWheelBus
-import com.gios.lightvoice.hw.WheelBus
+import com.gios.light.common.hw.LightKey
+import com.gios.light.common.hw.LightKeys
+import com.gios.light.common.hw.LocalWheelBus
+import com.gios.light.common.hw.WheelBus
 import com.gios.lightvoice.ui.AlarmsScreen
 import com.gios.lightvoice.ui.AskPanel
 import com.gios.lightvoice.ui.NotesScreen

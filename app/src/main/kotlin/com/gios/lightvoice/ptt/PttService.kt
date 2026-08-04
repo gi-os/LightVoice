@@ -8,7 +8,7 @@ import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.gios.lightvoice.ListenActivity
 import com.gios.lightvoice.Prefs
-import com.gios.lightvoice.hw.LightKeys
+import com.gios.light.common.hw.LightKeys
 
 /**
  * Global push-to-talk: a long-press of one hardware key opens the mic from anywhere

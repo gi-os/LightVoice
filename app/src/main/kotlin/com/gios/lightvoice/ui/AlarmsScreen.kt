@@ -22,7 +22,7 @@ import androidx.compose.ui.unit.dp
 import com.gios.lightvoice.act.Alarms
 import com.gios.lightvoice.data.Alarm
 import com.gios.lightvoice.data.Store
-import com.gios.lightvoice.hw.WheelScroll
+import com.gios.light.common.hw.WheelScroll
 
 /** Everything scheduled, and a way to delete one without talking. */
 @Composable
