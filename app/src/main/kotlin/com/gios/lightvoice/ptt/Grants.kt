@@ -18,12 +18,29 @@ import android.view.KeyEvent
  */
 object Grants {
 
+    /**
+     * Whether the push-to-talk accessibility service is actually switched on.
+     *
+     * The setting is a colon-separated list of flattened component names, and it is read here
+     * rather than through `AccessibilityManager` because that only lists services matching the
+     * feedback types you ask for, and this one declares none.
+     *
+     * Compared as [ComponentName] objects, not as strings, and that is the whole fix. There are
+     * two flattened forms of the same component — the long `pkg/pkg.Cls` that
+     * `flattenToString` writes, and the short `pkg/.Cls` that `flattenToShortString` writes and
+     * that the platform stores when the class lives under the package — and the old code
+     * compared against the long one only. So the readout said OFF for a service that was
+     * running perfectly well. [ComponentName.unflattenFromString] accepts both forms and
+     * expands the short one, so the comparison no longer depends on which form the writer used.
+     */
     fun pttServiceEnabled(c: Context): Boolean {
-        val expected = ComponentName(c, PttService::class.java).flattenToString()
+        val expected = ComponentName(c, PttService::class.java)
         val enabled = runCatching {
             Settings.Secure.getString(c.contentResolver, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES)
         }.getOrNull().orEmpty()
-        return enabled.split(':').any { it.equals(expected, ignoreCase = true) }
+        return enabled.split(':').any { entry ->
+            ComponentName.unflattenFromString(entry.trim()) == expected
+        }
     }
 
     fun exactAlarmsAllowed(c: Context): Boolean =

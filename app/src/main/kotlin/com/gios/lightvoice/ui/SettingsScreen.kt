@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.gios.lightvoice.Prefs
 import com.gios.lightvoice.act.Bb
 import com.gios.lightvoice.act.ContactBook
-import com.gios.lightvoice.hw.WheelScroll
+import com.gios.light.common.hw.WheelScroll
 import com.gios.lightvoice.ptt.Grants
 import com.gios.lightvoice.ui.theme.Dim
 import com.gios.lightvoice.ui.theme.Faint

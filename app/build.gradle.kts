@@ -32,7 +32,7 @@ android {
         targetSdk = 35
         // CI overwrites both from the workflow run number; see .github/workflows/build.yml
         versionCode = 1
-        versionName = "1.1.0"
+        versionName = "1.2.0"
 
         buildConfigField("String", "REPORT_TOKEN", "\"$reportToken\"")
         buildConfigField("String", "REPORT_REPO", "\"gi-os/light-reports\"")
@@ -52,7 +52,11 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // Shrunk and obfuscated, with R8 in full mode (see gradle.properties). The keep
+            // rules in proguard-rules.pro are the exhaustive list of things nothing in this
+            // app calls by name — the manifest components above all.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             // Same committed key as debug, so either APK upgrades over the other.
             signingConfig = signingConfigs.getByName("debug")
@@ -71,6 +75,14 @@ android {
 }
 
 dependencies {
+    // The wheel, shake-to-report and the LightSync provider, shared with the other Light apps.
+    implementation("com.gios:light-common:1.2.0")
+
+    // What makes the baseline profile inside that AAR actually get applied. Below API 31
+    // nothing on the phone reads a profile on its own, and the LPIII is slow enough at cold
+    // start that the difference is visible.
+    implementation("androidx.profileinstaller:profileinstaller:1.4.1")
+
     val composeBom = platform("androidx.compose:compose-bom:2024.12.01")
     implementation(composeBom)
     implementation("androidx.core:core-ktx:1.15.0")
@@ -90,6 +102,6 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
 
-    // The shake gesture is plain arithmetic with no Android imports, so it runs here.
+    // The shake gesture's arithmetic is tested in light-common now, where it lives.
     testImplementation("junit:junit:4.13.2")
 }

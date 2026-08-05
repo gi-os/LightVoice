@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.gios.light.common.theme.akkuratFamilyOrDefault
 
 /** LightOS renders greyscale on a matte panel, so the palette is luminance only. */
 private val MonoDark = darkColorScheme(

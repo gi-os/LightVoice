@@ -18,18 +18,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
-import com.gios.lightvoice.hw.LightKey
-import com.gios.lightvoice.hw.LightKeys
-import com.gios.lightvoice.hw.LocalWheelBus
-import com.gios.lightvoice.hw.WheelBus
+import com.gios.light.common.hw.LightKey
+import com.gios.light.common.hw.LightKeys
+import com.gios.light.common.hw.LocalWheelBus
+import com.gios.light.common.hw.WheelBus
 import com.gios.lightvoice.ui.AlarmsScreen
 import com.gios.lightvoice.ui.AskPanel
 import com.gios.lightvoice.ui.NotesScreen
 import com.gios.lightvoice.ui.SettingsScreen
 import com.gios.lightvoice.ui.TabBar
 import com.gios.lightvoice.ui.theme.LightVoiceTheme
-import com.gios.lightvoice.report.CrashLog
-import com.gios.lightvoice.report.ReportOverlay
+import com.gios.light.common.report.LightReport
+import com.gios.light.common.report.ReportOverlay
 
 class MainActivity : ComponentActivity() {
 
@@ -62,9 +62,18 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // First thing, before anything else can throw: the handler chains onto whatever is
-        // already installed and only writes a file, so it is safe this early.
-        CrashLog.install(this)
+        // First thing, before anything else can throw. This is the one call the shared
+        // reporting module needs: it records what the app calls itself and how it is allowed
+        // to file issues, and arms the crash handler on the way through. The token cannot be
+        // read from inside the library — a library has its own BuildConfig, not the app's —
+        // so it is handed in here. Blank is a working build; reports queue for a later one.
+        LightReport.install(
+            context = this,
+            appName = "LightVoice",
+            label = "voice",
+            token = BuildConfig.REPORT_TOKEN,
+            repo = BuildConfig.REPORT_REPO,
+        )
         WindowCompat.setDecorFitsSystemWindows(window, true)
         // Asked once on first open rather than at the moment of speaking: a permission
         // sheet appearing over the mic is the one thing that breaks the illusion.

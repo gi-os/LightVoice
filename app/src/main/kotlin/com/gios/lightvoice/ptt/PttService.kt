@@ -8,7 +8,8 @@ import android.view.KeyEvent
 import android.view.accessibility.AccessibilityEvent
 import com.gios.lightvoice.ListenActivity
 import com.gios.lightvoice.Prefs
-import com.gios.lightvoice.hw.LightKeys
+import com.gios.light.common.hw.LightKey
+import com.gios.light.common.hw.LightKeys
 
 /**
  * Global push-to-talk: a long-press of one hardware key opens the mic from anywhere
@@ -42,7 +43,12 @@ class PttService : AccessibilityService() {
         // scrolls with it, LightControl uses it phone-wide — so a turn bound here would open
         // the mic every time anything scrolled. Refused before learning mode can offer it as
         // a candidate, and before a binding made by an older build can act on it.
-        if (LightKeys.of(event) != null) return false
+        //
+        // Turns only, and that is narrower than it used to be on purpose: the shared LightKeys
+        // recognises five controls, and refusing all of them would quietly un-bind a camera
+        // button somebody had already learned as their push-to-talk key.
+        val control = LightKeys.of(event)
+        if (control == LightKey.WheelUp || control == LightKey.WheelDown) return false
 
         // Learning mode: report whatever was pressed so Settings can bind it, and get
         // out of the way. Never consume here — the key being learned may be the only

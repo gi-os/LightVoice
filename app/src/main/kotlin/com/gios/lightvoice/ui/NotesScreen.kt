@@ -21,7 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.gios.lightvoice.data.Note
 import com.gios.lightvoice.data.Store
-import com.gios.lightvoice.hw.WheelScroll
+import com.gios.light.common.hw.WheelScroll
 import com.gios.lightvoice.ui.theme.Dim
 import java.time.Instant
 import java.time.ZoneId

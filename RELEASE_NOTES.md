@@ -1,30 +1,38 @@
-## LightVoice v1.1 — Shake the phone to report a bug
+## LightVoice v1.2 — Setup tells the truth about push-to-talk
 
-**LightVoice can now file its own bug reports, and you can say what went wrong in your own words.**
+**The Settings screen said push-to-talk was off while it was working perfectly well.** That is
+fixed. If you have been staring at a line reading OFF and wondering why your key still opened the
+mic, nothing was wrong with the phone — the readout was.
 
-Until now only Roll, Notebook and Phono could do this. Every other app on the phone failed
-silently: you would notice something wrong on the subway, have nowhere to put it, and have
-forgotten it by the time you were near a computer. This is the same feature, ported.
+The check compared the name of the accessibility service against the list Android keeps of which
+services are switched on. Both are the same component written down, but Android has two ways of
+writing it — the long form and a short one — and the app only knew the long one. So a service
+that was running matched nothing and reported itself dead. It now compares the components rather
+than the text, which accepts either form. Nothing about push-to-talk itself changed; only what
+Settings says about it.
 
-Shake the phone twice — there and back, twice — and a sheet comes up. Pick what happened from
-five chips, and add a note if you have something to add. The note is optional but it is the part
-that carries anything: "Something looks wrong" is a shrug, and what you type becomes the title of
-the issue. Under it the report carries the screen you were on, the app and firmware versions,
-free space, heap, and the stack trace if the app died the last time you had it open.
+Under that, this release moves the shared plumbing out of the app. The wheel handling, the
+shake-to-report gesture and the Akkurat type all now come from `light-common`, the same library
+the other Light apps use, instead of being a copy that drifts. Two things you might notice from
+that. A shake no longer throws a sheet over what you were reading — it puts a small chip in the
+corner, and only tapping the chip opens the report form, so a misread shake costs you a glance
+instead of an interruption. And an issue filed from the phone now carries the app version in its
+title and a `crash` label when there was a stack trace, which is the difference between a report
+that gets fixed and one that sits in a list.
 
-Three things raise the sheet. A shake, because you noticed something. A crash last run, asked
-once on the next launch, because that is the only moment the stack trace is still worth anything.
-And a failure the app noticed by itself — those are the reports that otherwise never get filed,
-because a screen that quietly came back empty looks ordinary.
+LightVoice also joins LightSync. Your alarms, timers, reminders and notes now travel in the
+nightly backup. They are the part of this app that exists nowhere else: it schedules its own
+alarms because LightOS has no clock app to hand them to, so until now a wiped phone meant a
+weekday alarm that simply never rang again, with nothing to notice until the morning. API keys
+and settings ride along in the same file — cheap to retype, but not free. Recorded audio does
+not: the last thing you said and the last thing it said back are cached for seconds and are not
+worth sending anywhere.
 
-Reports queue on disk before anything is sent, always. A phone that reports a freeze is by
-definition a phone that was just misbehaving, and a report that exists only in flight is the one
-report guaranteed to be lost. If there is no network, or this build has no reporting key, it
-waits on the phone until a build that does installs over it.
-
-The gesture is tuned to be hard to trigger by accident: it counts reversals rather than force,
-because setting the phone down hard clears any threshold a shake clears, but only a shake
-*reverses*. Walking never fires it. That arithmetic now has unit tests in every app that has the
-feature.
-
-The accelerometer only runs while you are looking at the app.
+The release build is now shrunk and obfuscated with R8 in full mode, which is where the risk in
+this release sits. Full mode deletes anything it cannot see being used, and the parts of this app
+nothing calls by name — the accessibility service, the alarm receiver, the boot receiver, the
+ring service — are exactly the parts it would delete. They are named individually in the keep
+rules, and the keep rules carry the reason each one is there. It has been reasoned through rather
+than tested on hardware, so if push-to-talk stops responding or an alarm goes quiet after
+updating, that is the thing to suspect, and the debug APK on the same release is built without
+any of it.
