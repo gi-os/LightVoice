@@ -83,7 +83,7 @@ short press still changes the volume exactly as before. Worst case if anything m
 is one unwanted volume step; the service can't trap the user.
 
 To undo it: `adb shell settings put secure enabled_accessibility_services ""`. That empties
-the same list [LightControl](https://github.com/gi-os/LightControl)'s setup writes to, so
+the same list [BrightControl](https://github.com/gi-os/BrightControl)'s setup writes to, so
 if both are installed, colon-join both components instead of running either setup command
 alone:
 
@@ -107,7 +107,7 @@ notch after a pause waits for a second to confirm it, since the wheel sits under
 refuses it even if an older binding names one, because a turn is a scroll everywhere else
 on the phone, and binding it here would open the mic every time a list is read. Holding
 the wheel in, clicking it, and the camera button all do nothing in June; for those,
-[LightControl](https://github.com/gi-os/LightControl) is the optional separate install
+[BrightControl](https://github.com/gi-os/BrightControl) is the optional separate install
 that gives the whole phone brightness, flashlight and camera-button actions, each
 rebindable. It passes bare turns straight through to `com.gios.*`, so installing it does
 not take June's own scrolling away.
@@ -141,7 +141,7 @@ presence, since LightOS has no Settings screens to check any of that from outsid
 Goes through your own BlueBubbles server, `POST /api/v1/chat/new` with a single address —
 AppleScript's send-to-buddy lands in the existing thread, so there's no chat guid to
 resolve and no Private API needed. Shows up in
-[LightChat](https://github.com/gi-os/LightChat) like any other message. Contacts merge
+[BrightChat](https://github.com/gi-os/BrightChat) like any other message. Contacts merge
 `ContactsContract` with the Mac address book pulled from `GET /api/v1/contact`.
 
 ## Building
@@ -168,7 +168,7 @@ Issues and PRs welcome.
 
 - `enabled_accessibility_services` is a single shared list — any change to the PTT setup
   flow needs to keep the colon-join behavior working for anyone who also runs
-  LightControl.
+  BrightControl.
 - Keep the spoken confirmation composed from what the dispatcher actually did, not from
   what the model claims — that's the guarantee the app makes and it should stay true for
   new intents too.
