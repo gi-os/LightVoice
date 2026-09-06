@@ -26,6 +26,7 @@ object Prefs {
     private const val K_PTT_KEYCODE = "ptt_keycode"
     private const val K_PTT_LEARN = "ptt_learn"
     private const val K_PTT_LAST_SEEN = "ptt_last_seen"
+    private const val K_USED = "used"
     private const val K_ALARMS = "alarms"
     private const val K_NOTES = "notes"
     private const val K_BB_CONTACTS = "bb_contacts"
@@ -82,6 +83,10 @@ object Prefs {
     /** Last keycode the service saw while learning, so Settings can display it. */
     fun pttLastSeen(c: Context) = prefs(c).getInt(K_PTT_LAST_SEEN, 0)
     fun setPttLastSeen(c: Context, v: Int) = prefs(c).edit().putInt(K_PTT_LAST_SEEN, v).apply()
+
+    /** Set once the hold gesture has been used; the "HOLD" coaching text then stays away. */
+    fun used(c: Context) = prefs(c).getBoolean(K_USED, false)
+    fun setUsed(c: Context, v: Boolean) = prefs(c).edit().putBoolean(K_USED, v).apply()
 
     fun alarmsJson(c: Context) = str(c, K_ALARMS, "[]")
     fun setAlarmsJson(c: Context, v: String) = put(c, K_ALARMS, v)

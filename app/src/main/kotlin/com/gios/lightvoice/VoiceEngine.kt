@@ -65,6 +65,10 @@ object VoiceEngine {
         val rec = Recorder(app)
         if (!rec.hasPermission()) return false
         _state.value = State(phase = Phase.Listening)
+        // The hold gesture is now known, so the "HOLD" coaching text can stay away from
+        // here on. Written the moment the mic actually opens, so a mis-tap that never
+        // started listening does not count as having used it.
+        Prefs.setUsed(app, true)
 
         // The recorder's meter is a StateFlow, so collecting it never completes on its
         // own — hold the job and cancel it, or every utterance leaves one behind.

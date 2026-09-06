@@ -1,17 +1,19 @@
-## light-common 1.2.1 — the baseline profile arrives
+## LightVoice v1.3 — the hold hint leaves after you use it, and the circle stops shoving the text
 
-A one-line dependency bump, and the only reason it needs a release of its own is that the last
-one did not do what it said.
+Two small things that only show up once you are actually talking to June.
 
-The previous version added `profileinstaller` on the strength of light-common shipping a baseline
-profile in its AAR. It was not in the AAR. The file had been put in `src/main/baselineProfiles/`,
-which is the app-module directory; a library ships one as `src/main/baseline-prof.txt`, and AGP
-packages nothing and warns about nothing when it is in the wrong place. So `profileinstaller` was
-installed, ran, and found no profile.
+**The "HOLD" coaching text now goes away after the first use.** The Ask tab used to sit
+permanently under "HOLD TO TALK" with "HOLD" in the circle — an instruction you needed exactly
+once, on the first open, and never again. The first time the mic actually opens the flag is set,
+and from then on the idle circle is just the ring with a dot in it and no caption. A mis-tap that
+never started listening does not count: the flag is written at the moment the mic opens, not the
+moment the finger goes down.
 
-1.2.1 fixes the packaging, and this build is the first that actually gets it: the wheel and the
-crash handler are compiled ahead of time instead of being interpreted on the way to the first
-frame. That is the first turn of the wheel after a cold start, and the code that runs in
-`onCreate` of every single launch.
+**The circle's pulse no longer moves the text above it.** While you talk the ring swells and
+shrinks to the sound of your voice. It did that by growing its own layout size, which reflowed the
+whole screen every level sample — so the status line and the transcript above the circle jumped up
+and down in time with the blinking. The ring now stays a fixed size in layout and the pulse is a
+visual scale, with the height reserved up front so the grown ring never covers the text either side
+of it.
 
-Nothing else changed — no code, no keep rules, no behaviour.
+- No schema change. Installs over 1.2.x and keeps everything.

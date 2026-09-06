@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +51,9 @@ fun AskPanel(autoStart: Boolean = false, modifier: Modifier = Modifier) {
     val state by VoiceEngine.state.collectAsStateWithLifecycle()
     val level by VoiceEngine.level.collectAsStateWithLifecycle()
     var denied by remember { mutableStateOf(false) }
+    // Whether the hold gesture has been done at least once. Read fresh rather than
+    // remembered, so the coaching text drops away the moment the first hold registers.
+    val used = Prefs.used(context)
 
     val askMic = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
         denied = !ok
@@ -84,7 +89,7 @@ fun AskPanel(autoStart: Boolean = false, modifier: Modifier = Modifier) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                statusLine(state.phase),
+                statusLine(state.phase, used),
                 style = MaterialTheme.typography.labelSmall,
                 color = Dim,
             )
@@ -99,11 +104,25 @@ fun AskPanel(autoStart: Boolean = false, modifier: Modifier = Modifier) {
             }
         }
 
-        Box(contentAlignment = Alignment.Center) {
-            val size = (132 * scale).dp
+        // The ring pulses to the sound of the voice while it listens. That pulse is a
+        // visual scale, not a layout change: the ring used to grow and shrink its own
+        // `.size` with every level sample, which reflowed the SpaceBetween column around
+        // it and made the text above jump up and down in time with the blinking. The ring
+        // now stays a fixed 132dp in layout and scales visually, and the box reserves the
+        // full pulse height so the grown ring never covers the text on either side of it.
+        Box(
+            Modifier
+                .fillMaxWidth()
+                .height(206.dp),
+            contentAlignment = Alignment.Center,
+        ) {
             Box(
                 Modifier
-                    .size(size)
+                    .size(132.dp)
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                    }
                     .border(1.dp, Color.White, CircleShape)
                     .background(
                         if (state.phase == VoiceEngine.Phase.Listening) Color(0xFF141414) else Color.Black,
@@ -130,7 +149,7 @@ fun AskPanel(autoStart: Boolean = false, modifier: Modifier = Modifier) {
                     when (state.phase) {
                         VoiceEngine.Phase.Listening -> "●"
                         VoiceEngine.Phase.Thinking, VoiceEngine.Phase.Acting -> "…"
-                        else -> "HOLD"
+                        else -> if (used) "●" else "HOLD"
                     },
                     style = MaterialTheme.typography.labelLarge,
                     color = Color.White,
@@ -161,8 +180,8 @@ fun AskPanel(autoStart: Boolean = false, modifier: Modifier = Modifier) {
     }
 }
 
-private fun statusLine(phase: VoiceEngine.Phase) = when (phase) {
-    VoiceEngine.Phase.Idle -> "HOLD TO TALK"
+private fun statusLine(phase: VoiceEngine.Phase, used: Boolean) = when (phase) {
+    VoiceEngine.Phase.Idle -> if (used) "" else "HOLD TO TALK"
     VoiceEngine.Phase.Listening -> "LISTENING"
     VoiceEngine.Phase.Thinking -> "TRANSCRIBING"
     VoiceEngine.Phase.Acting -> "WORKING"
