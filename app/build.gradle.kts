@@ -76,7 +76,7 @@ android {
 
 dependencies {
     // The wheel, shake-to-report and the LightSync provider, shared with the other Light apps.
-    implementation("com.gios:light-common:1.2.1")
+    implementation("com.gios:light-common:1.9.0")
 
     // What makes the baseline profile inside that AAR actually get applied. Below API 31
     // nothing on the phone reads a profile on its own, and the LPIII is slow enough at cold
