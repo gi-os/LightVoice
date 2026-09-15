@@ -1,5 +1,7 @@
 # LightVoice
 
+[**⬇ Download the latest APK**](https://github.com/gi-os/LightVoice/releases/latest) · free, open source.
+
 **June** — a voice assistant for the **Light Phone III**. Hold a key, say what you want,
 and it happens: alarms, timers, reminders, calls, iMessages, notes, plain questions.
 Package `com.gios.lightvoice`, arm64, minSdk 29. Current released version: **v1.0.7**.
