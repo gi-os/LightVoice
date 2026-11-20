@@ -71,7 +71,8 @@ class MainActivity : ComponentActivity() {
             context = this,
             appName = "LightVoice",
             label = "voice",
-            token = BuildConfig.REPORT_TOKEN,
+            // No key on the phone: reports queue until light-common 1.11.0, which posts them to the report relay.
+            token = "",
             repo = BuildConfig.REPORT_REPO,
         )
         WindowCompat.setDecorFitsSystemWindows(window, true)
